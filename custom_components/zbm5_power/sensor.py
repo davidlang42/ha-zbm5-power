@@ -1,6 +1,5 @@
 """Sensor platform for ZBM5 Power and Energy."""
 from datetime import timedelta
-from homeassistant.util.slugify import slugify
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -9,6 +8,7 @@ from homeassistant.components.sensor import (
 from homeassistant.components.integration.sensor import IntegrationSensor
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
 
@@ -19,8 +19,17 @@ async def async_setup_entry(
     power_sensor = Zbm5PowerSensor(entry)
     
     device_name = entry.data.get('name', 'ZBM5')
-    power_entity_id = f"sensor.{slugify(device_name)}_power"
     
+    # Look up the real entity ID dynamically from the Entity Registry
+    ent_reg = er.async_get(hass)
+    power_unique_id = f"{entry.entry_id}_power"
+    power_entity_id = ent_reg.async_get_entity_id("sensor", entry.domain, power_unique_id)
+    
+    # Fallback for the very first boot before the entity registry registers it
+    if not power_entity_id:
+        slug_name = "".join(c if c.isalnum() else "_" for c in device_name.lower()).strip("_")
+        power_entity_id = f"sensor.{slug_name}_power"
+
     energy_sensor = IntegrationSensor(
         integration_method="trapezoidal",
         name=f"{device_name} Energy",
