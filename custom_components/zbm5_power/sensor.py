@@ -17,19 +17,27 @@ async def async_setup_entry(
 ) -> None:
     """Set up the ZBM5 power and energy sensors from a config entry."""
     data = entry.options if entry.options else entry.data
+    light_entity_id = data.get("light_entity")
     device_name = data.get("name", "ZBM5")
 
-    # Dynamically resolve the power entity ID from the entity registry
+    # Look up the light's device registry entry so we can share its device info
+    light_device_id = None
+    if light_entity_id:
+        ent_reg = er.async_get(hass)
+        if light_entry := ent_reg.async_get(light_entity_id):
+            light_device_id = light_entry.device_id
+
+    # Look up the power entity ID dynamically from the Entity Registry
     ent_reg = er.async_get(hass)
     power_unique_id = f"{entry.entry_id}_power"
     power_entity_id = ent_reg.async_get_entity_id("sensor", entry.domain, power_unique_id)
-    
-    # Fallback if not registered yet on first boot
+
+    # Fallback for the very first boot before the entity registry registers it
     if not power_entity_id:
         slug_name = "".join(c if c.isalnum() else "_" for c in device_name.lower()).strip("_")
         power_entity_id = f"sensor.{slug_name}_power"
 
-    power_sensor = Zbm5PowerSensor(entry)
+    power_sensor = Zbm5PowerSensor(entry, light_device_id)
     
     energy_sensor = IntegrationSensor(
         integration_method="trapezoidal",
@@ -41,7 +49,23 @@ async def async_setup_entry(
         round_digits=3,
         max_sub_interval=None,
     )
-    
+
+    # If we found a parent device for the light, link the energy sensor to it too
+    if light_device_id:
+        energy_sensor._attr_device_info = {"identifiers": {(entry.domain, light_device_id)}}
+        # Alternatively, using device_id directly if supported by integration sensor, 
+        # but sharing device_info via identifiers is safest:
+        dev_reg = dr.async_get(hass)
+        if dev_entry := dev_reg.async_get(light_device_id):
+            energy_sensor._attr_device_info = {
+                "identifiers": dev_entry.identifiers,
+                "connections": dev_entry.connections,
+                "name": dev_entry.name,
+                "manufacturer": dev_entry.manufacturer,
+                "model": dev_entry.model,
+                "suggested_area": dev_entry.suggested_area,
+            }
+
     async_add_entities([power_sensor, energy_sensor])
 
 class Zbm5PowerSensor(SensorEntity):
@@ -51,9 +75,10 @@ class Zbm5PowerSensor(SensorEntity):
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = "W"
 
-    def __init__(self, entry: ConfigEntry) -> None:
+    def __init__(self, entry: ConfigEntry, light_device_id: str | None) -> None:
         """Initialize the sensor."""
         self._entry = entry
+        self._light_device_id = light_device_id
         self._attr_name = f"{entry.data.get('name', 'ZBM5')} Power"
         self._attr_unique_id = f"{entry.entry_id}_power"
         self._unsub_watcher = None
@@ -61,7 +86,20 @@ class Zbm5PowerSensor(SensorEntity):
 
     @property
     def device_info(self):
-        """Return device information to tie this sensor to its config entry."""
+        """Return device information to tie this sensor to the target light's device."""
+        if self._light_device_id:
+            # Look up the light's device identifiers so we nest cleanly under it
+            dev_reg = dr.async_get(self.hass)
+            if dev_entry := dev_reg.async_get(self._light_device_id):
+                return {
+                    "identifiers": dev_entry.identifiers,
+                    "connections": dev_entry.connections,
+                    "name": dev_entry.name,
+                    "manufacturer": dev_entry.manufacturer,
+                    "model": dev_entry.model,
+                }
+
+        # Fallback to standard config entry device info if light has no device
         return {
             "identifiers": {(self._entry.domain, self._entry.entry_id)},
             "name": self._entry.data.get("name", "ZBM5 Power"),
@@ -77,7 +115,7 @@ class Zbm5PowerSensor(SensorEntity):
         self._wiring_type = data.get("wiring_type", "no_neutral")
         self._relay_mode = data.get("relay_mode", "normal")
         self._bulb_wattage = float(data.get("bulb_wattage", 10.0))
-        
+
         # Re-bind state watchers if already added to hass
         if self.hass:
             self._async_setup_watcher()
@@ -88,24 +126,6 @@ class Zbm5PowerSensor(SensorEntity):
         # Listen for options changes
         self.async_on_remove(self._entry.add_update_listener(self._async_update_listener))
         self._async_setup_watcher()
-
-        # Synchronize the Area ID from the target light to this device
-        if self._light_entity:
-            ent_reg = er.async_get(self.hass)
-            dev_reg = dr.async_get(self.hass)
-            
-            target_area_id = None
-            if light_entry := ent_reg.async_get(self._light_entity):
-                target_area_id = light_entry.area_id
-                if not target_area_id and light_entry.device_id:
-                    if light_dev := dev_reg.async_get(light_entry.device_id):
-                        target_area_id = light_dev.area_id
-
-            if target_area_id:
-                if devices := dr.async_entries_for_config_entry(dev_reg, self._entry.entry_id):
-                    for dev in devices:
-                        if dev.area_id != target_area_id:
-                            dev_reg.async_update_device(dev.id, area_id=target_area_id)
 
     @callback
     def _async_setup_watcher(self) -> None:
