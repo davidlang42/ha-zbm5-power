@@ -49,7 +49,7 @@ async def async_setup_entry(
         round_digits=3,
         max_sub_interval=None,
     )
-    
+
     # If we found a parent device for the light, link the energy sensor to it too
     if light_device_id:
         energy_sensor._attr_device_info = {"identifiers": {(entry.domain, light_device_id)}}
@@ -60,6 +60,10 @@ async def async_setup_entry(
             energy_sensor._attr_device_info = {
                 "identifiers": dev_entry.identifiers,
                 "connections": dev_entry.connections,
+                "name": dev_entry.name,
+                "manufacturer": dev_entry.manufacturer,
+                "model": dev_entry.model,
+                "suggested_area": dev_entry.suggested_area,
             }
 
     async_add_entities([power_sensor, energy_sensor])
@@ -94,7 +98,7 @@ class Zbm5PowerSensor(SensorEntity):
                     "manufacturer": dev_entry.manufacturer,
                     "model": dev_entry.model,
                 }
-        
+
         # Fallback to standard config entry device info if light has no device
         return {
             "identifiers": {(self._entry.domain, self._entry.entry_id)},
@@ -111,7 +115,7 @@ class Zbm5PowerSensor(SensorEntity):
         self._wiring_type = data.get("wiring_type", "no_neutral")
         self._relay_mode = data.get("relay_mode", "normal")
         self._bulb_wattage = float(data.get("bulb_wattage", 10.0))
-        
+
         # Re-bind state watchers if already added to hass
         if self.hass:
             self._async_setup_watcher()
