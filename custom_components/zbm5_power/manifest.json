@@ -1,0 +1,10 @@
+{
+  "domain": "zbm5_power",
+  "name": "ZBM5 Power Calculator",
+  "codeowners": [],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "",
+  "iot_class": "calculated",
+  "version": "1.0.0"
+}
