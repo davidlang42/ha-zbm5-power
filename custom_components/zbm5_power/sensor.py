@@ -23,18 +23,15 @@ async def async_setup_entry(
     ent_reg = er.async_get(hass)
     dev_reg = dr.async_get(hass)
 
-    # Look up the light's device registry entry so we can share its device info
-    light_device_id = None
-    light_device_identifiers = None
-    light_device_connections = None
-    
+    # Find the target light's Area ID
+    target_area_id = None
     if light_entity_id:
         if light_entry := ent_reg.async_get(light_entity_id):
-            light_device_id = light_entry.device_id
-            if light_device_id:
-                if light_dev := dev_reg.async_get(light_device_id):
-                    light_device_identifiers = light_dev.identifiers
-                    light_device_connections = light_dev.connections
+            # Check entity area first, then fall back to its parent device area
+            target_area_id = light_entry.area_id
+            if not target_area_id and light_entry.device_id:
+                if light_dev := dev_reg.async_get(light_entry.device_id):
+                    target_area_id = light_dev.area_id
 
     # Look up the power entity ID dynamically from the Entity Registry
     power_unique_id = f"{entry.entry_id}_power"
@@ -46,7 +43,7 @@ async def async_setup_entry(
         power_entity_id = f"sensor.{slug_name}_power"
 
     # Pass the light's identifiers to the power sensor
-    power_sensor = Zbm5PowerSensor(entry, light_device_identifiers, light_device_connections)
+    power_sensor = Zbm5PowerSensor(entry)
     
     energy_sensor = IntegrationSensor(
         integration_method="trapezoidal",
@@ -59,18 +56,12 @@ async def async_setup_entry(
         max_sub_interval=None,
     )
 
-    # Attach the energy sensor to the exact same device identifiers
-    if light_device_identifiers:
-        energy_sensor._attr_device_info = {
-            "identifiers": light_device_identifiers,
-            "connections": light_device_connections,
-        }
-    else:
-        energy_sensor._attr_device_info = {
-            "identifiers": {(entry.domain, entry.entry_id)},
-            "name": device_name,
-            "manufacturer": "Custom Integration",
-        }
+    # Apply the target light's area to this integration's device entry
+    if target_area_id:
+        # We target devices registered under this specific config entry
+        if devices := dr.async_entries_for_config_entry(dev_reg, entry.entry_id):
+            for dev in devices:
+                dev_reg.async_update_device(dev.id, area_id=target_area_id)
 
     async_add_entities([power_sensor, energy_sensor])
 
