@@ -51,11 +51,9 @@ class Zbm5PowerSensor(SensorEntity):
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = "W"
 
-    def __init__(self, entry: ConfigEntry, light_identifiers, light_connections) -> None:
+    def __init__(self, entry: ConfigEntry) -> None:
         """Initialize the sensor."""
         self._entry = entry
-        self._light_identifiers = light_identifiers
-        self._light_connections = light_connections
         self._attr_name = f"{entry.data.get('name', 'ZBM5')} Power"
         self._attr_unique_id = f"{entry.entry_id}_power"
         self._unsub_watcher = None
