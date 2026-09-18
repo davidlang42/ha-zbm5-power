@@ -19,12 +19,12 @@ async def async_setup_entry(
     data = entry.options if entry.options else entry.data
     device_name = data.get("name", "ZBM5")
 
-    # Look up the power entity ID dynamically from the Entity Registry
+    # Dynamically resolve the power entity ID from the entity registry
     ent_reg = er.async_get(hass)
     power_unique_id = f"{entry.entry_id}_power"
     power_entity_id = ent_reg.async_get_entity_id("sensor", entry.domain, power_unique_id)
-
-    # Fallback for the very first boot before the entity registry registers it
+    
+    # Fallback if not registered yet on first boot
     if not power_entity_id:
         slug_name = "".join(c if c.isalnum() else "_" for c in device_name.lower()).strip("_")
         power_entity_id = f"sensor.{slug_name}_power"
@@ -41,7 +41,7 @@ async def async_setup_entry(
         round_digits=3,
         max_sub_interval=None,
     )
-
+    
     async_add_entities([power_sensor, energy_sensor])
 
 class Zbm5PowerSensor(SensorEntity):
@@ -59,45 +59,9 @@ class Zbm5PowerSensor(SensorEntity):
         self._unsub_watcher = None
         self._update_config()
 
-    async def async_added_to_hass(self) -> None:
-        """Run when entity about to be added to hass."""
-        await super().async_added_to_hass()
-        
-        # Listen for options changes
-        self.async_on_remove(self._entry.add_update_listener(self._async_update_listener))
-        
-        # Set up state change listeners
-        self._async_setup_watcher()
-
-        # Synchronize the Area ID from the target light to this device
-        if self._light_entity:
-            ent_reg = er.async_get(self.hass)
-            dev_reg = dr.async_get(self.hass)
-            
-            target_area_id = None
-            if light_entry := ent_reg.async_get(self._light_entity):
-                target_area_id = light_entry.area_id
-                if not target_area_id and light_entry.device_id:
-                    if light_dev := dev_reg.async_get(light_entry.device_id):
-                        target_area_id = light_dev.area_id
-
-            if target_area_id:
-                # Find this config entry's device and assign the area
-                if devices := dr.async_entries_for_config_entry(dev_reg, self._entry.entry_id):
-                    for dev in devices:
-                        if dev.area_id != target_area_id:
-                            dev_reg.async_update_device(dev.id, area_id=target_area_id)
-
     @property
     def device_info(self):
-        """Return device information to tie this sensor to the target light's device."""
-        if self._light_identifiers:
-            return {
-                "identifiers": self._light_identifiers,
-                "connections": self._light_connections,
-            }
-
-        # Fallback to standard config entry device info if light has no device
+        """Return device information to tie this sensor to its config entry."""
         return {
             "identifiers": {(self._entry.domain, self._entry.entry_id)},
             "name": self._entry.data.get("name", "ZBM5 Power"),
@@ -113,7 +77,7 @@ class Zbm5PowerSensor(SensorEntity):
         self._wiring_type = data.get("wiring_type", "no_neutral")
         self._relay_mode = data.get("relay_mode", "normal")
         self._bulb_wattage = float(data.get("bulb_wattage", 10.0))
-
+        
         # Re-bind state watchers if already added to hass
         if self.hass:
             self._async_setup_watcher()
@@ -124,6 +88,24 @@ class Zbm5PowerSensor(SensorEntity):
         # Listen for options changes
         self.async_on_remove(self._entry.add_update_listener(self._async_update_listener))
         self._async_setup_watcher()
+
+        # Synchronize the Area ID from the target light to this device
+        if self._light_entity:
+            ent_reg = er.async_get(self.hass)
+            dev_reg = dr.async_get(self.hass)
+            
+            target_area_id = None
+            if light_entry := ent_reg.async_get(self._light_entity):
+                target_area_id = light_entry.area_id
+                if not target_area_id and light_entry.device_id:
+                    if light_dev := dev_reg.async_get(light_entry.device_id):
+                        target_area_id = light_dev.area_id
+
+            if target_area_id:
+                if devices := dr.async_entries_for_config_entry(dev_reg, self._entry.entry_id):
+                    for dev in devices:
+                        if dev.area_id != target_area_id:
+                            dev_reg.async_update_device(dev.id, area_id=target_area_id)
 
     @callback
     def _async_setup_watcher(self) -> None:
