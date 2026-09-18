@@ -33,9 +33,6 @@ class ZBM5PowerConfigFlow(config_entries.ConfigFlow, domain="zbm5_power"):
 class ZBM5PowerOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options flow to edit values later from the UI."""
 
-    def __init__(self, config_entry):
-        self.config_entry = config_entry
-
     async def async_step_init(self, user_input=None):
         """Manage the options."""
         if user_input is not None:
