@@ -24,6 +24,7 @@ async def async_setup_entry(
         unit_prefix="k",
         unit_time="h",
         round_digits=3,
+        max_sub_interval=None,
     )
     
     async_add_entities([power_sensor, energy_sensor])
