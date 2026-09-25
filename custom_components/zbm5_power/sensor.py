@@ -52,9 +52,6 @@ async def async_setup_entry(
 
     # If we found a parent device for the light, link the energy sensor to it too
     if light_device_id:
-        energy_sensor._attr_device_info = {"identifiers": {(entry.domain, light_device_id)}}
-        # Alternatively, using device_id directly if supported by integration sensor, 
-        # but sharing device_info via identifiers is safest:
         dev_reg = dr.async_get(hass)
         if dev_entry := dev_reg.async_get(light_device_id):
             energy_sensor._attr_device_info = {
@@ -63,7 +60,6 @@ async def async_setup_entry(
                 "name": dev_entry.name,
                 "manufacturer": dev_entry.manufacturer,
                 "model": dev_entry.model,
-                "suggested_area": dev_entry.suggested_area,
             }
 
     async_add_entities([power_sensor, energy_sensor])
