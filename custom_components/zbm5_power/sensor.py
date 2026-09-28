@@ -108,6 +108,7 @@ class Zbm5PowerSensor(SensorEntity):
         data = self._entry.options if self._entry.options else self._entry.data
         self._light_entity = data.get("light_entity") or self._entry.data.get("light_entity")
         self._gangs = int(data.get("gangs", 1))
+        self._dummy_relays = int(data.get("dummy_relays", 0))
         self._wiring_type = data.get("wiring_type", "no_neutral")
         self._relay_mode = data.get("relay_mode", "normal")
         self._bulb_wattage = float(data.get("bulb_wattage", 10.0))
@@ -163,7 +164,10 @@ class Zbm5PowerSensor(SensorEntity):
         # Light Power
         light_p = self._bulb_wattage if is_on else 0.0
 
-        return round(switch_p + relay_p + light_p, 3)
+        # Dummy Relays Power
+        dummy_p = self._dummy_relays * (0.2 if is_on else 0.0)
+
+        return round(switch_p + relay_p + light_p + dummy_p, 3)
 
     @property
     def extra_state_attributes(self):
@@ -171,6 +175,7 @@ class Zbm5PowerSensor(SensorEntity):
         return {
             "light_entity": self._light_entity,
             "gangs": self._gangs,
+            "dummy_relays": self._dummy_relays,
             "wiring_type": self._wiring_type,
             "relay_mode": self._relay_mode,
             "bulb_wattage": self._bulb_wattage,

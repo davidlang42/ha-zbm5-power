@@ -19,6 +19,7 @@ class ZBM5PowerConfigFlow(config_entries.ConfigFlow, domain="zbm5_power"):
             vol.Required("name", default="ZBM5 Light"): str,
             vol.Required("light_entity"): selector.EntitySelector(selector.EntitySelectorConfig(domain="light")),
             vol.Required("gangs", default="1"): selector.SelectSelector(selector.SelectSelectorConfig(options=["1", "2", "3"], mode="dropdown")),
+            vol.Required("dummy_relays", default=0): selector.NumberSelector(selector.NumberSelectorConfig(min=0, max=10, step=1)),
             vol.Required("wiring_type", default="no_neutral"): selector.SelectSelector(selector.SelectSelectorConfig(options=[{"label": "No Neutral", "value": "no_neutral"}, {"label": "With Neutral", "value": "with_neutral"}], mode="dropdown")),
             vol.Required("relay_mode", default="normal"): selector.SelectSelector(selector.SelectSelectorConfig(options=[{"label": "Normal", "value": "normal"}, {"label": "Detached", "value": "detached"}], mode="dropdown")),
             vol.Required("bulb_wattage", default=10.0): selector.NumberSelector(selector.NumberSelectorConfig(min=0, max=200, step=0.1, unit_of_measurement="W")),
@@ -44,6 +45,7 @@ class ZBM5PowerOptionsFlowHandler(config_entries.OptionsFlow):
 
         schema = vol.Schema({
             vol.Required("gangs", default=current.get("gangs", "1")): selector.SelectSelector(selector.SelectSelectorConfig(options=["1", "2", "3"], mode="dropdown")),
+            vol.Required("dummy_relays", default=current.get("dummy_relays", 0)): selector.NumberSelector(selector.NumberSelectorConfig(min=0, max=10, step=1)),
             vol.Required("wiring_type", default=current.get("wiring_type", "no_neutral")): selector.SelectSelector(selector.SelectSelectorConfig(options=[{"label": "No Neutral", "value": "no_neutral"}, {"label": "With Neutral", "value": "with_neutral"}], mode="dropdown")),
             vol.Required("relay_mode", default=current.get("relay_mode", "normal")): selector.SelectSelector(selector.SelectSelectorConfig(options=[{"label": "Normal", "value": "normal"}, {"label": "Detached", "value": "detached"}], mode="dropdown")),
             vol.Required("bulb_wattage", default=current.get("bulb_wattage", 10.0)): selector.NumberSelector(selector.NumberSelectorConfig(min=0, max=200, step=0.1, unit_of_measurement="W")),

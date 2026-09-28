@@ -1,0 +1,22 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "gangs": "gangs excluding dummy relays",
+          "dummy_relays": "number of dummy relays"
+        }
+      }
+    },
+    "options": {
+      "step": {
+        "init": {
+          "data": {
+            "gangs": "gangs excluding dummy relays",
+            "dummy_relays": "number of dummy relays"
+          }
+        }
+      }
+    }
+  }
+}
