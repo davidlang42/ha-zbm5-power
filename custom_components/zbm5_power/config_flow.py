@@ -1,3 +1,4 @@
+"""Config flow for ZBM5 Power integration."""
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
@@ -28,7 +29,8 @@ class ZBM5PowerConfigFlow(config_entries.ConfigFlow, domain="zbm5_power"):
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
-        return ZBM5PowerOptionsFlowHandler(config_entry)
+        """Get the options flow handler."""
+        return ZBM5PowerOptionsFlowHandler()
 
 class ZBM5PowerOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options flow to edit values later from the UI."""

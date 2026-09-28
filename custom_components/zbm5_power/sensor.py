@@ -140,7 +140,8 @@ class Zbm5PowerSensor(SensorEntity):
             )
 
     async def _async_update_listener(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
-        """Handle options update from UI."""
+        """Handle options update from UI and immediately refresh state."""
+        self._entry = entry
         self._update_config()
         self.async_write_ha_state()
 
