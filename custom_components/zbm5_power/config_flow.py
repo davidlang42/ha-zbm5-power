@@ -22,7 +22,7 @@ class ZBM5PowerConfigFlow(config_entries.ConfigFlow, domain="zbm5_power"):
             vol.Required("dummy_relays", default=0): selector.NumberSelector(selector.NumberSelectorConfig(min=0, max=10, step=1)),
             vol.Required("wiring_type", default="no_neutral"): selector.SelectSelector(selector.SelectSelectorConfig(options=[{"label": "No Neutral", "value": "no_neutral"}, {"label": "With Neutral", "value": "with_neutral"}], mode="dropdown")),
             vol.Required("relay_mode", default="normal"): selector.SelectSelector(selector.SelectSelectorConfig(options=[{"label": "Normal", "value": "normal"}, {"label": "Detached", "value": "detached"}], mode="dropdown")),
-            vol.Required("bulb_wattage", default=10.0): selector.NumberSelector(selector.NumberSelectorConfig(min=0, max=200, step=0.1, unit_of_measurement="W")),
+            vol.Required("bulb_wattage", default=10.0): selector.NumberSelector(selector.NumberSelectorConfig(min=0, max=360, step=0.1, unit_of_measurement="W")),
         })
 
         return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
@@ -48,7 +48,7 @@ class ZBM5PowerOptionsFlowHandler(config_entries.OptionsFlow):
             vol.Required("dummy_relays", default=current.get("dummy_relays", 0)): selector.NumberSelector(selector.NumberSelectorConfig(min=0, max=10, step=1)),
             vol.Required("wiring_type", default=current.get("wiring_type", "no_neutral")): selector.SelectSelector(selector.SelectSelectorConfig(options=[{"label": "No Neutral", "value": "no_neutral"}, {"label": "With Neutral", "value": "with_neutral"}], mode="dropdown")),
             vol.Required("relay_mode", default=current.get("relay_mode", "normal")): selector.SelectSelector(selector.SelectSelectorConfig(options=[{"label": "Normal", "value": "normal"}, {"label": "Detached", "value": "detached"}], mode="dropdown")),
-            vol.Required("bulb_wattage", default=current.get("bulb_wattage", 10.0)): selector.NumberSelector(selector.NumberSelectorConfig(min=0, max=200, step=0.1, unit_of_measurement="W")),
+            vol.Required("bulb_wattage", default=current.get("bulb_wattage", 10.0)): selector.NumberSelector(selector.NumberSelectorConfig(min=0, max=360, step=0.1, unit_of_measurement="W")),
         })
 
         return self.async_show_form(step_id="init", data_schema=schema)

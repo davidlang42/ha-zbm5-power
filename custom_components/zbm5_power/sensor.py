@@ -161,8 +161,15 @@ class Zbm5PowerSensor(SensorEntity):
         else:
             relay_p = 0.2 if is_on else 0.0
 
-        # Light Power
-        light_p = self._bulb_wattage if is_on else 0.0
+        # Light Power (scaled by brightness if available, otherwise full power)
+        light_p = 0.0
+        if is_on:
+            brightness = light_state.attributes.get("brightness") if light_state else None
+            if brightness is not None:
+                brightness_factor = float(brightness) / 255.0
+                light_p = self._bulb_wattage * brightness_factor
+            else:
+                light_p = self._bulb_wattage
 
         # Dummy Relays Power
         dummy_p = self._dummy_relays * (0.2 if is_on else 0.0)
