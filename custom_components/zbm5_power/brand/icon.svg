@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1c23" />
+      <stop offset="100%" stop-color="#0f1117" />
+    </linearGradient>
+    <linearGradient id="powerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <!-- Background Card -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  
+  <!-- Outer Circuit Ring / Border Accent -->
+  <rect x="48" y="48" width="416" height="416" rx="80" fill="none" stroke="#334155" stroke-width="4" stroke-dasharray="16 12" opacity="0.6" />
+
+  <!-- Stylized Smart Switch Module Shape -->
+  <rect x="136" y="136" width="240" height="240" rx="48" fill="#1e293b" stroke="#475569" stroke-width="8" />
+  
+  <!-- Toggle/Relay Indicator Dot -->
+  <circle cx="256" cy="184" r="14" fill="#10b981" filter="url(#glow)" />
+
+  <!-- Central Lightning / Power Symbol -->
+  <path d="M276 212 L216 284 H260 L236 348 L304 264 H256 Z" fill="url(#powerGrad)" filter="url(#glow)" />
+  
+  <!-- Subtle Energy Wave Arc -->
+  <path d="M 180 330 A 100 100 0 0 1 332 330" fill="none" stroke="#3b82f6" stroke-width="6" stroke-linecap="round" opacity="0.4" />
+</svg>

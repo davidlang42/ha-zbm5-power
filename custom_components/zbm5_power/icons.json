@@ -1,0 +1,12 @@
+{
+  "entity": {
+    "sensor": {
+      "power": {
+        "default": "mdi:flash"
+      },
+      "energy": {
+        "default": "mdi:power-meter"
+      }
+    }
+  }
+}
